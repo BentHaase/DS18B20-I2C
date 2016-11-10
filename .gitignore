@@ -34,3 +34,14 @@
 
 # Configuration files
 *.cfg
+
+TM4C/.launches/*
+TM4C/.settings/*
+TM4C/Debug/*
+TM4C/Release/*
+TM4C/targetConfigs/*
+TM4C/.ccsproject
+TM4C/.project
+TM4C/.cproject
+TM4C/tm4c129cncpdt.cmd
+TM4C/tm4c129cncpdt_startup_ccs.c
