@@ -20,11 +20,17 @@
 #define BUS_H_I	70 * 1.6
 #define BUS_H_J	410 * 3//1.6
 
-
-void wait( int time );
+void Init_Bus( void );
 boolean Bus_Reset( void );
 boolean Bus_WriteBit(int Output);
 int Bus_ReadBit( void );
 boolean Bus_WriteByte( int Data );
 int Bus_ReadByte( void );
+boolean init_OneDevice( void );
+double Read_OneDevice( void );
+boolean Init_MultipleDevices( void );
+double Read_Device( int Dev );
+
+
+
 
