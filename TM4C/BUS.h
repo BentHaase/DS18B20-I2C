@@ -30,6 +30,7 @@ boolean init_OneDevice( void );
 double Read_OneDevice( void );
 boolean Init_MultipleDevices( void );
 double Read_Device( int Dev );
+int CRC_Check( int Data0, int Data1, int Data2, int Data3, int Data4, int Data5, int Data6, int Data7, int Data8 );
 
 
 

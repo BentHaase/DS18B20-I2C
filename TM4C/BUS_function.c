@@ -1,14 +1,10 @@
 
 
 
-
-#include "BUS.h"
 #include "SYSTEM.h"
-#include <stdint.h>
-#include "inc/tm4c1294ncpdt.h"
 
 extern int DeviceCounter ;
-extern int Devices[2][4];
+extern int Devices[2][7];
 
 void Init_Bus( void ) {
 
@@ -206,13 +202,16 @@ double Read_OneDevice( void ) {
 }
 
 boolean Init_MultipleDevices( void ) {
-	int i = 0, k = 0, j = 0, g = 0, temp1, temp2, notequal = 0;
+	int i = 0, k = 0, j = 0, g = 0, temp1, temp2, notequal = 0, notequalold = 0, status = 0, between = 0, betweenFlag = 0;
 	int bit_double[5] = {{0}};
 	extern int DeviceCounter;
-	extern int Devices[][];
+	extern int Devices[2][7];
 	boolean Reset;
 
+	Devices[0][6] = 0xFFFFFFFF;
+	Devices[1][6] = 0xFFFFFFFF;
 	do {
+		notequalold = notequal;
 		notequal = 0;
 		g = 0;
 
@@ -225,17 +224,52 @@ boolean Init_MultipleDevices( void ) {
 		Bus_WriteByte(0xF0);
 
 		for (i = 0; i < 2; i++) {
+
 			for (j = 0; j < 32; j++) {
 				temp1 = Bus_ReadBit();
 				temp2 = Bus_ReadBit();
 
-				if(temp1 == temp2 && k != 0 && bit_double[0] != j  && bit_double[1] != j && bit_double[2] != j && bit_double[3] != j && bit_double[4] != j ) {
-					bit_double[g] = j;
-					g++;
-					Bus_WriteBit(0x01);
-					Devices[i][k] = Devices[i][k] << 1;
-					Devices[i][k] |= 0x01;
-					notequal++;
+				if(temp1 == temp2 && k != 0) {
+					if(k == 1 && notequal == 0) {
+						printf("%i\n",j);
+						bit_double[0] = j;
+						Bus_WriteBit(0x01);
+						Devices[i][k] = Devices[i][k] << 1;
+						Devices[i][k] |= 0x01;
+						notequal++;
+					} else if( k == 2 && notequal < 2) {
+						printf("%i\n",j);
+						bit_double[1] = j;
+						Bus_WriteBit(0x01);
+						Devices[i][k] = Devices[i][k] << 1;
+						Devices[i][k] |= 0x01;
+						notequal++;
+					} else if(k == 3 && notequal < 3) {
+						printf("%i\n",j);
+						bit_double[2] = j;
+						Bus_WriteBit(0x01);
+						Devices[i][k] = Devices[i][k] << 1;
+						Devices[i][k] |= 0x01;
+						notequal++;
+					} else if( k == 4 && notequal < 4) {
+						printf("%i\n",j);
+						bit_double[3] = j;
+						Bus_WriteBit(0x01);
+						Devices[i][k] = Devices[i][k] << 1;
+						Devices[i][k] |= 0x01;
+						notequal++;
+					} else if( k == 5 && notequal < 5) {
+						printf("%i\n",j);
+						bit_double[4] = j;
+						Bus_WriteBit(0x01);
+						Devices[i][k] = Devices[i][k] << 1;
+						Devices[i][k] |= 0x01;
+						notequal++;
+					} else {
+						Bus_WriteBit(temp1);
+						Devices[i][k] = Devices[i][k] << 1;
+						Devices[i][k] |= temp1;
+					}
 				} else {
 					Bus_WriteBit(temp1);
 					Devices[i][k] = Devices[i][k] << 1;
@@ -246,9 +280,9 @@ boolean Init_MultipleDevices( void ) {
 		}
 		k++;
 
-	} while( k == 1 || notequal != 0 );
+	} while( k == 1 || notequal != notequalold );
 
-	DeviceCounter = k-1;
+	DeviceCounter = k-2;
 
 	if (DeviceCounter == 1) {
 		return False;
@@ -325,6 +359,8 @@ double Read_Device( int Dev ) {
 		return 0xFFFFFFFF;
 	}
 
+	CRC_Check( Data, Data1, Data2, Data3, Data4, Data5, Data6, Data7, Data8);
+
 	temp = Data | (Data1 << 8);
 
 	if ( temp & 0xF800 ) {
@@ -335,6 +371,42 @@ double Read_Device( int Dev ) {
 	temperatur = temperatur * 0.0625;
 
 	return temperatur;
+
+}
+
+int CRC_Check( int Data0, int Data1, int Data2, int Data3, int Data4, int Data5, int Data6, int Data7, int Data8 ) {
+	int i, k;
+	int polynom = 0x119, bit_in = 0, temp = 0, speicher = 0;
+
+	Data0 = (Data0 << 24 ) | (Data1 << 16) | (Data2 << 8) | (Data3);
+
+	for(k = 0; k < 2; k++) {								// Einschub der ersten 8 Bytes in den Generator
+
+		for( i = 31; i >= 0; i-- ) {
+
+			bit_in = (Data0 >> i) & 0x01;
+
+			temp = ((speicher & 0x01) ^ bit_in) * polynom;
+			temp = temp >> 1;
+
+			speicher = speicher >> 1;
+			speicher = speicher ^ temp;
+		}
+		Data0 = (Data4 << 24 ) | (Data5 << 16) | (Data6 << 8) | (Data7);
+	}
+
+	for( i = 7; i >= 0; i-- ) {								// Einschub des letzten Bytes in den Generator
+
+		bit_in = (Data8 >> i) & 0x01;
+
+		temp = ((speicher & 0x01) ^ bit_in) * polynom;
+		temp = temp >> 1;
+
+		speicher = speicher >> 1;
+		speicher = speicher ^ temp;
+	}
+
+	return speicher;									 	// Rückgabe des Schieberegisterinhalts
 
 }
 
